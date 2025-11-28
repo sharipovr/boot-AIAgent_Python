@@ -1,21 +1,31 @@
-from functions.get_file_content import get_file_content
+from functions.run_python_file import run_python_file
 
 
-print('get_file_content("calculator", "main.py"):')
-result = get_file_content("calculator", "main.py")
+print('run_python_file("calculator", "main.py"):')
+result = run_python_file("calculator", "main.py")
 print(result)
 
 print()
-print('get_file_content("calculator", "pkg/calculator.py"):')
-result = get_file_content("calculator", "pkg/calculator.py")
+print('run_python_file("calculator", "main.py", ["3 + 5"]):')
+result = run_python_file("calculator", "main.py", ["3 + 5"])
 print(result)
 
 print()
-print('get_file_content("calculator", "/bin/cat"):')
-result = get_file_content("calculator", "/bin/cat")
+print('run_python_file("calculator", "tests.py"):')
+result = run_python_file("calculator", "tests.py")
 print(result)
 
 print()
-print('get_file_content("calculator", "pkg/does_not_exist.py"):')
-result = get_file_content("calculator", "pkg/does_not_exist.py")
+print('run_python_file("calculator", "../main.py"):')
+result = run_python_file("calculator", "../main.py")
+print(result)
+
+print()
+print('run_python_file("calculator", "nonexistent.py"):')
+result = run_python_file("calculator", "nonexistent.py")
+print(result)
+
+print()
+print('run_python_file("calculator", "lorem.txt"):')
+result = run_python_file("calculator", "lorem.txt")
 print(result)
