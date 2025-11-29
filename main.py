@@ -91,36 +91,44 @@ messages = [
     types.Content(role="user", parts=[types.Part(text=content)]),
 ]
 
-while True:
-    res = client.models.generate_content(
-        model=model,
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions], system_instruction=system_prompt
-        ),
-    )
+for _ in range(20):
+    try:
+        res = client.models.generate_content(
+            model=model,
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions], system_instruction=system_prompt
+            ),
+        )
 
-    if res.function_calls:
-        # Add the model's response (with function calls) to messages
-        for candidate in res.candidates:
-            messages.append(candidate.content)
-        
-        # Execute each function call and collect results
-        function_call_results = []
-        for function_call_part in res.function_calls:
-            function_call_result = call_function(function_call_part, verbose=isVerbose)
-            if not function_call_result.parts[0].function_response.response:
-                raise Exception("Function call result does not have a response")
-            function_call_results.append(function_call_result.parts[0])
-            if isVerbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-        
-        # Add all tool results to messages
-        messages.append(types.Content(role="tool", parts=function_call_results))
-    else:
-        # No more function calls, print final response and exit loop
-        print(res.text)
+        # Check if model is finished (no function calls and has text response)
+        if not res.function_calls and res.text:
+            print(res.text)
+            break
+
+        # Process function calls
+        if res.function_calls:
+            # Add the model's response (with function calls) to messages
+            for candidate in res.candidates:
+                messages.append(candidate.content)
+            
+            # Execute each function call and collect results
+            function_call_results = []
+            for function_call_part in res.function_calls:
+                function_call_result = call_function(function_call_part, verbose=isVerbose)
+                if not function_call_result.parts[0].function_response.response:
+                    raise Exception("Function call result does not have a response")
+                function_call_results.append(function_call_result.parts[0])
+                if isVerbose:
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+            
+            # Add all tool results to messages
+            messages.append(types.Content(role="user", parts=function_call_results))
+    except Exception as e:
+        print(f"Error: {e}")
         break
+else:
+    print("Max iterations reached. Exiting.")
 
 if isVerbose:
     print("User prompt:", content)
