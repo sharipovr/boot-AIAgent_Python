@@ -54,17 +54,18 @@ def call_function(function_call_part, verbose=False):
 
 
 load_dotenv()
-if len(sys.argv) < 2:
-    print("No content provided ,exiting program")
-    sys.exit(1)
 
-isVerbose = True if sys.argv[-1] == "--verbose" else False
+isVerbose = "--verbose" in sys.argv
 
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
-model = "gemini-2.0-flash-001"
-content = sys.argv[1]
+model = "gemini-2.5-flash"
+# Use default prompt if no argument provided
+if len(sys.argv) < 2 or (len(sys.argv) == 2 and sys.argv[1] == "--verbose"):
+    content = "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum."
+else:
+    content = sys.argv[1]
 system_prompt = """
 You are a helpful AI coding agent.
 
@@ -101,8 +102,16 @@ for _ in range(20):
             ),
         )
 
+        # Verify usage_metadata is not None
+        if res.usage_metadata is None:
+            raise RuntimeError("usage_metadata is None, indicating a failed API request")
+
         # Check if model is finished (no function calls and has text response)
         if not res.function_calls and res.text:
+            print(f"User prompt: {content}")
+            print(f"Prompt tokens: {res.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {res.usage_metadata.candidates_token_count}")
+            print("Response:")
             print(res.text)
             break
 
@@ -129,9 +138,3 @@ for _ in range(20):
         break
 else:
     print("Max iterations reached. Exiting.")
-
-if isVerbose:
-    print("User prompt:", content)
-    print("Prompt tokens:", res.usage_metadata.prompt_token_count)
-    print("Response tokens:", res.usage_metadata.candidates_token_count)
-
